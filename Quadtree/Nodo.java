@@ -21,7 +21,7 @@ public class Nodo {
 		return this.info;
 	}
 	public void setInfo(int info) throws EInfo {
-        if (info!=-1 || info!=1) throw new EInfo("Dato invalido");
+        if (info!=-1 && info!=1) throw new EInfo("Dato invalido");
 		this.info = info;
 	}
 	
@@ -39,15 +39,12 @@ public class Nodo {
         if (0>index || index>4) throw new EInfo("Dato invalido");
         return this.hijos[index];
     }
-    // public void setHijos(Nodo[] hijos) {
-    //     this.hijos = hijos;
-    // }
-	
-	public void crearHijos() {
+
+    public void crearHijos() {
         this.hijos= new Nodo[4];
-        for (Nodo hijo: hijos){
-            hijo= new Nodo();
-            hijo.setPadre(this);
+        for (int i=0;i<4;i++){
+            hijos[i]= new Nodo();
+            hijos[i].setPadre(this);
         }
     }
 }
