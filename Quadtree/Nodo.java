@@ -8,9 +8,9 @@ class EInfo extends Exception{
 
 public class Nodo {
 
-	int info; //1 = blanco, -1 = negro y 0 = null (para cuando no tenga valor sino que tenga hijos)
-	Nodo padre;
-	Nodo[] hijos;
+	private int info; //1 = blanco, -1 = negro y 0 = null (para cuando no tenga valor sino que tenga hijos)
+	private Nodo padre;
+	private Nodo[] hijos;
 
     public Nodo() {
 		this.info = 0;
