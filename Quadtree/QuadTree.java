@@ -13,114 +13,112 @@ import javax.imageio.ImageIO;
 public class QuadTree {
 
     private Nodo raiz;
-    private int anchoOriginal, altoOriginal, blanco;
+    private int anchoOriginal, altoOriginal, blanco, pot;
 	
-	public QuadTree(){ //Se le pasa la imagen como parámetro
+	public QuadTree(File imagejpg){ //Se le pasa la imagen como parámetro
 		this.raiz= new Nodo();
 		this.blanco= Color.WHITE.getRGB();
-		this.altoOriginal= 0;
-		this.anchoOriginal= 0;
-	}
-	
-	public void compresion(File imagejpg) throws EInfo {
-		//Se lee la imagen
 		BufferedImage image = null;
+
 		try {
 			image= ImageIO.read(imagejpg);
 			this.altoOriginal= image.getHeight();
 			this.anchoOriginal= image.getWidth();
+			this.pot= potenciaMayorCercana();
 			image= ajustarImagen(image);
-
+			compresion(image);
 		} catch (IOException e) {
 			System.out.println("No existe el archivo con dirección: " + imagejpg);
+		} catch (EInfo e) {
+			e.getMessage();
 		}
 
+
+	}
+	
+	public void compresion(BufferedImage image) throws EInfo {
+		int size=pot;
 		//Se consigue el alto de la imagen
-		int[] alto = {0, altoOriginal - 1};
+		int[] alto = {0, size - 1};
 		//Se consigue el ancho de la imagen
-		int[] ancho = {0, anchoOriginal - 1};
+		int[] ancho = {0, size - 1};
 		//Comienza la compresion en el metodo recursivo
 		compresion(image, alto, ancho, raiz);
 	}
 	public void compresion(BufferedImage image, int[] alto, int[] ancho, Nodo actual) throws EInfo {
 		//Se coge el pixel en las primeras cordenadas del alto y ancho
-		int pixel = image.getRGB(alto[0], ancho[0]);
+		int pixel = image.getRGB(ancho[0], alto[0]);
 
-		int fila = alto[0];
-		int columna = ancho[0];
-		//Se busca en todo el area de pixeles si se tiene un color distinto del primer pixel
-		boolean interrupcion = false;
-		while(fila <= alto[1] && !interrupcion) {
-			columna = ancho[0];
-			while(columna <= ancho[1] && !interrupcion) {
-				if(image.getRGB(fila, columna) != pixel) {
-					interrupcion = true;
-					fila--; columna--; //
-				}
-				columna++;
-			}
-			fila++;
-		}
-
-		//En caso de que se salga del area que tenemos, se define la hoja, si no, se crean los hijos.
-		//Incluso cuando la subimagen que se analice sea de un solo pixel, se cumplirá en los whiles de arriba
-		//que al sumarle 1 a fila y columna sera mayor que el punto en el que se ubicaba ese pixel
-		if(fila > alto[1] && columna > ancho[1]) {
-			//Se define la hoja con el color del pixel
+		if(alto[0] == alto[1] && ancho[0] == ancho[1]) {
 			if(pixel == blanco) actual.setInfo(1);
 			else actual.setInfo(-1);
 		}else {
-			//Se crean los hijos
-			int mitadAlto = (alto[0] + alto[1])/2;
-			int mitadAncho = (ancho[0] + ancho[1])/2;
-
-			actual.crearHijos();
-			//Arriba izquierda
-			compresion(image, new int[] {alto[0], mitadAlto}, new int[] {ancho[0], mitadAncho}, actual.getHijo(0));
-			//Arriba derecha
-			compresion(image, new int[] {alto[0], mitadAlto}, new int[] {mitadAncho + 1, ancho[1]}, actual.getHijo(1));
-			//Abajo derecha
-			compresion(image, new int[] {mitadAlto + 1, alto[1]}, new int[] {mitadAncho + 1, ancho[1]}, actual.getHijo(2));
-			//Abajo izquierda
-			compresion(image, new int[] {mitadAlto + 1, alto[1]}, new int[] {ancho[0], mitadAncho}, actual.getHijo(3));
+			int fila = alto[0];
+			int columna = ancho[0];
+			//Se busca en todo el area de pixeles si se tiene un color distinto del primer pixel
+			boolean interrupcion = false;
+			while(fila <= alto[1] && !interrupcion) {
+				columna = ancho[0];
+				while(columna <= ancho[1] && !interrupcion) {
+					if(image.getRGB(columna, fila) != pixel) {
+						interrupcion = true;
+						fila--; columna--; //
+					}
+					columna++;
+				}
+				fila++;
+			}
+	
+			//En caso de que se salga del area que tenemos, se define la hoja, si no, se crean los hijos.
+			//Incluso cuando la subimagen que se analice sea de un solo pixel, se cumplirá en los whiles de arriba
+			//que al sumarle 1 a fila y columna sera mayor que el punto en el que se ubicaba ese pixel
+			if(fila > alto[1] && columna > ancho[1]) {
+				//Se define la hoja con el color del pixel
+				if(pixel == blanco) actual.setInfo(1);
+				else actual.setInfo(-1);
+			}else {
+				//Se crean los hijos
+				int mitadAlto = (alto[0] + alto[1])/2;
+				int mitadAncho = (ancho[0] + ancho[1])/2;
+	
+				actual.crearHijos();
+				//Arriba izquierda
+				compresion(image, new int[] {alto[0], mitadAlto}, new int[] {ancho[0], mitadAncho}, actual.getHijo(0));
+				//Arriba derecha
+				compresion(image, new int[] {alto[0], mitadAlto}, new int[] {mitadAncho + 1, ancho[1]}, actual.getHijo(1));
+				//Abajo derecha
+				compresion(image, new int[] {mitadAlto + 1, alto[1]}, new int[] {mitadAncho + 1, ancho[1]}, actual.getHijo(2));
+				//Abajo izquierda
+				compresion(image, new int[] {mitadAlto + 1, alto[1]}, new int[] {ancho[0], mitadAncho}, actual.getHijo(3));
+			}
 		}
 	}
+
 	
 	public int potenciaMayorCercana(){ //Se encuentra la potencia de 2 más cercana y mayor o igual a la medida más grande (ancho o alto)
 		int i=0, pot;
 		while((pot= (int) Math.pow(2, i++))<anchoOriginal || pot<altoOriginal);
 		return pot;
 	}
-	public BufferedImage ajustarImagen(BufferedImage image) throws IOException{
-		int pot= potenciaMayorCercana();
+	
+	public BufferedImage ajustarImagen(BufferedImage image) throws IOException {
+		BufferedImage newImage = image;
 
-		if (anchoOriginal!=pot || altoOriginal!=pot){
+		if (anchoOriginal != pot || altoOriginal != pot) {
 			GraphicsConfiguration config = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
-			//Se crea un nuevo lienzo con las dimensiones de la potencia encontrada
-			image = config.createCompatibleImage(pot, pot); 
-			Graphics2D g2 = image.createGraphics();
+			// Se crea un nuevo lienzo con las dimensiones de la potencia encontrada
+			newImage = config.createCompatibleImage(pot, pot);
+			Graphics2D g2 = newImage.createGraphics();
 
-			//Creamos bordes para la imagen tal que cumpla con las dimensiones deseadas y requeridas para la conmpresion (2^n, 2^n)
+			// Creamos bordes para la imagen tal que cumpla con las dimensiones deseadas y
+			// requeridas para la conmpresion (2^n, 2^n)
 			g2.setColor(Color.WHITE);
-			g2.fillRect(0, altoOriginal, anchoOriginal, pot-altoOriginal);
-			g2.fillRect(anchoOriginal, 0, pot-anchoOriginal, pot);
-			g2.drawImage(image, 0, 0, null); //ACA ESTA EL PROBLEMA
+			g2.fillRect(0, 0, pot, pot);
+			g2.drawImage(image, 0, 0, null); // ACA ESTA EL PROBLEMA
 			g2.dispose();
-
-			// int fila = 0, columna = 0;
-			// while(fila <= altoOriginal) {
-			// 	columna = 0;
-			// 	while(columna <= anchoOriginal) {
-			// 		image.setRGB(fila, columna, image.getRGB(fila, columna));
-			// 		columna++;
-			// 	}
-			// 	fila++;
-			// }
-			
-			
 		}
-		ImageIO.write(image, "png", new File("Inicio.png"));
-		return image;
+		ImageIO.write(newImage, "png", new File("C:/Users/Alejandro/Downloads/Inicio.png"));
+		return newImage;
 	}
 	public BufferedImage limpiarImagen(BufferedImage image) throws IOException{
 		return image.getSubimage(0, 0, anchoOriginal, altoOriginal);
@@ -128,7 +126,7 @@ public class QuadTree {
 
 	public void reconstruccion() throws EInfo, IOException {
 		//Se lee la imagen
-		int size= potenciaMayorCercana();
+		int size= pot;
 		BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_RGB);
 
 		//Se consigue el alto de la imagen
@@ -140,8 +138,7 @@ public class QuadTree {
 		reconstruccion(image, alto, ancho, raiz);
 		//Por ultimo se limpia la imagen en caso de ser necesario
 		image= limpiarImagen(image);
-        ImageIO.write(image, "png", new File("Reconstruccion.png"));
-
+        ImageIO.write(image, "png", new File("C:/Users/Alejandro/Downloads/Reconstruccion.png"));
 	}
 	public void reconstruccion(BufferedImage image, int[] alto, int[] ancho, Nodo actual) throws EInfo {
 		//Nos fijamos si el nodo actual tiene hijos
@@ -158,25 +155,25 @@ public class QuadTree {
 			reconstruccion(image, new int[] {mitadAlto + 1, alto[1]}, new int[] {ancho[0], mitadAncho}, actual.getHijo(3));
 		}else{
 			Color color= (actual.getInfo()==1)? Color.WHITE: Color.BLACK;
-				int fila = alto[0];
-				int columna = ancho[0];
-				//Se busca en todo el area de pixeles si se tiene un color distinto del primer pixel
-				while(fila <= alto[1]) {
-					columna = ancho[0];
-					while(columna <= ancho[1]) {
-						image.setRGB(fila, columna, color.getRGB());
-						columna++;
-					}
-					fila++;
+			int fila = alto[0];
+			int columna = ancho[0];
+			//Se busca en todo el area de pixeles si se tiene un color distinto del primer pixel
+			while(fila <= alto[1]) {
+				columna = ancho[0];
+				while(columna <= ancho[1]) {
+					image.setRGB(columna, fila, color.getRGB());
+					columna++;
 				}
+				fila++;
+			}
 		}
 	}
 
 	public static void main(String[] args) {
-		File archivo_imagen = new File("C:/Users/Alejandro/Downloads/S.png");
-		QuadTree a = new QuadTree();
+		File archivo_imagen = new 
+		File("C:/Users/Alejandro/Downloads/S.png");
+		QuadTree a = new QuadTree(archivo_imagen);
 		try {
-			a.compresion(archivo_imagen);
 			a.reconstruccion();
 		} catch (EInfo e) {
 			e.printStackTrace();
