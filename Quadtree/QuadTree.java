@@ -15,7 +15,7 @@ public class QuadTree {
     private Nodo raiz;
     private int anchoOriginal, altoOriginal, blanco, pot;
 	
-	public QuadTree(File imagejpg){ //Se le pasa la imagen como parámetro
+	public QuadTree(File imagejpg){
 		this.raiz= new Nodo();
 		this.blanco= Color.WHITE.getRGB();
 		BufferedImage image = null;
@@ -49,51 +49,46 @@ public class QuadTree {
 		//Se coge el pixel en las primeras cordenadas del alto y ancho
 		int pixel = image.getRGB(ancho[0], alto[0]);
 
-		if(alto[0] == alto[1] && ancho[0] == ancho[1]) {
+		int fila = alto[0];
+		int columna = ancho[0];
+		//Se busca en todo el area de pixeles si se tiene un color distinto del primer pixel
+		boolean interrupcion = false;
+		while(fila <= alto[1] && !interrupcion) {
+			columna = ancho[0];
+			while(columna <= ancho[1] && !interrupcion) {
+				if(image.getRGB(columna, fila) != pixel) {
+					interrupcion = true;
+					fila--; columna--; //
+				}
+				columna++;
+			}
+			fila++;
+		}
+
+		//En caso de que se salga del area que tenemos, se define la hoja, si no, se crean los hijos.
+		//Incluso cuando la subimagen que se analice sea de un solo pixel, se cumplirá en los whiles de arriba
+		//que al sumarle 1 a fila y columna sera mayor que el punto en el que se ubicaba ese pixel
+		if(fila > alto[1] && columna > ancho[1]) {
+			//Se define la hoja con el color del pixel
 			if(pixel == blanco) actual.setInfo(1);
 			else actual.setInfo(-1);
 		}else {
-			int fila = alto[0];
-			int columna = ancho[0];
-			//Se busca en todo el area de pixeles si se tiene un color distinto del primer pixel
-			boolean interrupcion = false;
-			while(fila <= alto[1] && !interrupcion) {
-				columna = ancho[0];
-				while(columna <= ancho[1] && !interrupcion) {
-					if(image.getRGB(columna, fila) != pixel) {
-						interrupcion = true;
-						fila--; columna--; //
-					}
-					columna++;
-				}
-				fila++;
-			}
-	
-			//En caso de que se salga del area que tenemos, se define la hoja, si no, se crean los hijos.
-			//Incluso cuando la subimagen que se analice sea de un solo pixel, se cumplirá en los whiles de arriba
-			//que al sumarle 1 a fila y columna sera mayor que el punto en el que se ubicaba ese pixel
-			if(fila > alto[1] && columna > ancho[1]) {
-				//Se define la hoja con el color del pixel
-				if(pixel == blanco) actual.setInfo(1);
-				else actual.setInfo(-1);
-			}else {
-				//Se crean los hijos
-				int mitadAlto = (alto[0] + alto[1])/2;
-				int mitadAncho = (ancho[0] + ancho[1])/2;
-	
-				actual.crearHijos();
-				//Arriba izquierda
-				compresion(image, new int[] {alto[0], mitadAlto}, new int[] {ancho[0], mitadAncho}, actual.getHijo(0));
-				//Arriba derecha
-				compresion(image, new int[] {alto[0], mitadAlto}, new int[] {mitadAncho + 1, ancho[1]}, actual.getHijo(1));
-				//Abajo derecha
-				compresion(image, new int[] {mitadAlto + 1, alto[1]}, new int[] {mitadAncho + 1, ancho[1]}, actual.getHijo(2));
-				//Abajo izquierda
-				compresion(image, new int[] {mitadAlto + 1, alto[1]}, new int[] {ancho[0], mitadAncho}, actual.getHijo(3));
-			}
+			//Se crean los hijos
+			int mitadAlto = (alto[0] + alto[1])/2;
+			int mitadAncho = (ancho[0] + ancho[1])/2;
+
+			actual.crearHijos();
+			//Arriba izquierda
+			compresion(image, new int[] {alto[0], mitadAlto}, new int[] {ancho[0], mitadAncho}, actual.getHijo(0));
+			//Arriba derecha
+			compresion(image, new int[] {alto[0], mitadAlto}, new int[] {mitadAncho + 1, ancho[1]}, actual.getHijo(1));
+			//Abajo derecha
+			compresion(image, new int[] {mitadAlto + 1, alto[1]}, new int[] {mitadAncho + 1, ancho[1]}, actual.getHijo(2));
+			//Abajo izquierda
+			compresion(image, new int[] {mitadAlto + 1, alto[1]}, new int[] {ancho[0], mitadAncho}, actual.getHijo(3));
+
 		}
 	}
-
 	
 	public int potenciaMayorCercana(){ //Se encuentra la potencia de 2 más cercana y mayor o igual a la medida más grande (ancho o alto)
 		int i=0, pot;
@@ -114,10 +109,9 @@ public class QuadTree {
 			// requeridas para la conmpresion (2^n, 2^n)
 			g2.setColor(Color.WHITE);
 			g2.fillRect(0, 0, pot, pot);
-			g2.drawImage(image, 0, 0, null); // ACA ESTA EL PROBLEMA
+			g2.drawImage(image, 0, 0, null);
 			g2.dispose();
 		}
-		ImageIO.write(newImage, "png", new File("C:/Users/Alejandro/Downloads/Inicio.png"));
 		return newImage;
 	}
 	public BufferedImage limpiarImagen(BufferedImage image) throws IOException{
@@ -171,12 +165,12 @@ public class QuadTree {
 
 	public static void main(String[] args) {
 		File archivo_imagen = new 
-		File("C:/Users/Alejandro/Downloads/S.png");
+		File("C:/Users/Alejandro/Downloads/FINAL.png");
 		QuadTree a = new QuadTree(archivo_imagen);
 		try {
 			a.reconstruccion();
 		} catch (EInfo e) {
-			e.printStackTrace();
+			e.getMessage();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
